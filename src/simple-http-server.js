@@ -187,7 +187,7 @@ class MotionMCPServer {
     return [
       {
         name: "create_motion_project",
-        description: "Create a new project in Motion",
+        description: "Create a new project in Motion. If no workspaceId is provided, will use the first available workspace.",
         inputSchema: {
           type: "object",
           properties: {
@@ -206,6 +206,10 @@ class MotionMCPServer {
             status: {
               type: "string",
               description: "Project status (optional)"
+            },
+            workspaceId: {
+              type: "string",
+              description: "Workspace ID where the project should be created (optional - will auto-select if not provided)"
             }
           },
           required: ["name"]
@@ -227,7 +231,7 @@ class MotionMCPServer {
       },
       {
         name: "create_motion_task",
-        description: "Create a new task in Motion",
+        description: "Create a new task in Motion. If no workspaceId is provided, will use the first available workspace.",
         inputSchema: {
           type: "object",
           properties: {
@@ -241,11 +245,11 @@ class MotionMCPServer {
             },
             workspaceId: {
               type: "string",
-              description: "Workspace ID where the task should be created"
+              description: "Workspace ID where the task should be created (optional - will auto-select if not provided)"
             },
             projectId: {
               type: "string",
-              description: "Project ID to assign task to (optional)"
+              description: "Project ID to assign task to (optional - tasks can exist without a project)"
             },
             status: {
               type: "string",
@@ -266,17 +270,17 @@ class MotionMCPServer {
       },
       {
         name: "list_motion_tasks",
-        description: "List tasks in Motion with optional filters",
+        description: "List tasks in Motion with optional filters. If no workspaceId is provided, will use the first available workspace.",
         inputSchema: {
           type: "object",
           properties: {
             workspaceId: {
               type: "string",
-              description: "Optional workspace ID to filter tasks"
+              description: "Workspace ID to filter tasks (optional - will auto-select if not provided)"
             },
             projectId: {
               type: "string",
-              description: "Filter tasks by project ID (optional)"
+              description: "Filter tasks by project ID (optional - leave empty to get all tasks regardless of project)"
             },
             status: {
               type: "string",
