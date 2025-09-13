@@ -38,7 +38,18 @@ class SimpleMotionApiService {
   }
 
   async getProjects(workspaceId = null) {
-    const endpoint = workspaceId ? `/projects?workspaceId=${workspaceId}` : '/projects';
+    // Motion API requires workspaceId for projects
+    if (!workspaceId) {
+      // Try to get the first workspace if none provided
+      const workspaces = await this.getWorkspaces();
+      if (workspaces && workspaces.length > 0) {
+        workspaceId = workspaces[0].id;
+        console.log(`Using default workspace: ${workspaceId}`);
+      } else {
+        throw new Error('No workspace found. Please provide a workspaceId or ensure you have access to at least one workspace.');
+      }
+    }
+    const endpoint = `/projects?workspaceId=${workspaceId}`;
     return this.makeRequest('GET', endpoint);
   }
 
@@ -47,16 +58,26 @@ class SimpleMotionApiService {
   }
 
   async getTasks(options = {}) {
+    // Motion API requires workspaceId for tasks
+    if (!options.workspaceId) {
+      // Try to get the first workspace if none provided
+      const workspaces = await this.getWorkspaces();
+      if (workspaces && workspaces.length > 0) {
+        options.workspaceId = workspaces[0].id;
+        console.log(`Using default workspace for tasks: ${options.workspaceId}`);
+      } else {
+        throw new Error('No workspace found. Please provide a workspaceId or ensure you have access to at least one workspace.');
+      }
+    }
+    
     let endpoint = '/tasks';
     const params = new URLSearchParams();
     
-    if (options.workspaceId) params.append('workspaceId', options.workspaceId);
+    params.append('workspaceId', options.workspaceId);
     if (options.projectId) params.append('projectId', options.projectId);
     if (options.status) params.append('status', options.status);
     
-    if (params.toString()) {
-      endpoint += '?' + params.toString();
-    }
+    endpoint += '?' + params.toString();
     
     return this.makeRequest('GET', endpoint);
   }
@@ -198,6 +219,8 @@ class MotionMCPServer {
   // Handle MCP tool calls
   async handleToolCall(toolName, args) {
     try {
+      console.log(`MCP Tool Call: ${toolName}`, JSON.stringify(args, null, 2));
+      
       switch (toolName) {
         case "create_motion_project":
           return await this.handleCreateProject(args);
@@ -213,6 +236,7 @@ class MotionMCPServer {
           throw new Error(`Unknown tool: ${toolName}`);
       }
     } catch (error) {
+      console.error(`MCP Tool Error [${toolName}]:`, error);
       return {
         content: [
           {
@@ -358,10 +382,13 @@ async function handleRequest(request, mcpServer) {
     }
 
     try {
+      console.log('MCP Request Body:', request.body);
       const requestData = JSON.parse(request.body);
+      console.log('Parsed MCP Request:', JSON.stringify(requestData, null, 2));
 
       // Handle MCP protocol messages
       if (requestData.method === 'initialize') {
+        console.log('Handling initialize request');
         return {
           statusCode: 200,
           headers: {
@@ -381,6 +408,7 @@ async function handleRequest(request, mcpServer) {
       }
 
       if (requestData.method === 'tools/list') {
+        console.log('Handling tools/list request');
         return {
           statusCode: 200,
           headers: {
@@ -398,7 +426,9 @@ async function handleRequest(request, mcpServer) {
       }
 
       if (requestData.method === 'tools/call') {
+        console.log('Handling tools/call request');
         const { name, arguments: args } = requestData.params;
+        console.log(`Tool call: ${name} with args:`, args);
         const result = await mcpServer.handleToolCall(name, args);
         
         return {
@@ -415,6 +445,7 @@ async function handleRequest(request, mcpServer) {
         };
       }
 
+      console.log(`Unknown MCP method: ${requestData.method}`);
       return {
         statusCode: 200,
         headers: {
@@ -426,6 +457,7 @@ async function handleRequest(request, mcpServer) {
 
     } catch (error) {
       console.error('MCP Error:', error);
+      console.error('Request body that caused error:', request.body);
       return {
         statusCode: 200,
         headers: {
