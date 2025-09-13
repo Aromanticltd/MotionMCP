@@ -127,10 +127,16 @@ class SimpleMotionApiService {
     const params = new URLSearchParams();
     
     params.append('workspaceId', options.workspaceId);
-    if (options.projectId) params.append('projectId', options.projectId);
+    
+    // Only add projectId if it's a valid value (not null, undefined, or "null" string)
+    if (options.projectId && options.projectId !== 'null' && options.projectId !== null) {
+      params.append('projectId', options.projectId);
+    }
+    
     if (options.status) params.append('status', options.status);
     
     endpoint += '?' + params.toString();
+    console.log(`Final tasks endpoint: ${endpoint}`);
     
     return this.makeRequest('GET', endpoint);
   }
@@ -339,7 +345,17 @@ class MotionMCPServer {
   }
 
   async handleListProjects(args = {}) {
-    const projects = await this.motionService.getProjects(args.workspaceId);
+    const response = await this.motionService.getProjects(args.workspaceId);
+    console.log('Projects response:', JSON.stringify(response, null, 2));
+    
+    // Handle different response formats
+    const projects = response.projects || response;
+    console.log('Extracted projects:', JSON.stringify(projects, null, 2));
+    
+    if (!Array.isArray(projects)) {
+      throw new Error(`Unexpected projects format: ${typeof projects}`);
+    }
+    
     const projectList = projects.map(p => `- ${p.name} (ID: ${p.id})`).join('\n');
     return {
       content: [
@@ -364,7 +380,17 @@ class MotionMCPServer {
   }
 
   async handleListTasks(args = {}) {
-    const tasks = await this.motionService.getTasks(args);
+    const response = await this.motionService.getTasks(args);
+    console.log('Tasks response:', JSON.stringify(response, null, 2));
+    
+    // Handle different response formats
+    const tasks = response.tasks || response;
+    console.log('Extracted tasks:', JSON.stringify(tasks, null, 2));
+    
+    if (!Array.isArray(tasks)) {
+      throw new Error(`Unexpected tasks format: ${typeof tasks}`);
+    }
+    
     const taskList = tasks.map(t => `- ${t.name} (ID: ${t.id}) - Status: ${t.status || 'N/A'}`).join('\n');
     return {
       content: [
