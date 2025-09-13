@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  motion-mcp-server:
+    build: .
+    container_name: motion-mcp-server
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    environment:
+      - NODE_ENV=production
+      - MOTION_API_KEY=${MOTION_API_KEY}
+      - MOTION_MCP_TOOLS=${MOTION_MCP_TOOLS:-essential}
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8787/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - motion-mcp-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.motion-mcp.rule=Host(`motion-mcp.yourdomain.com`)"
+      - "traefik.http.routers.motion-mcp.tls=true"
+      - "traefik.http.routers.motion-mcp.tls.certresolver=letsencrypt"
+      - "traefik.http.services.motion-mcp.loadbalancer.server.port=8787"
+      - "traefik.http.middlewares.motion-mcp-cors.headers.accesscontrolallowmethods=GET,POST,OPTIONS"
+      - "traefik.http.middlewares.motion-mcp-cors.headers.accesscontrolalloworigin=*"
+      - "traefik.http.middlewares.motion-mcp-cors.headers.accesscontrolallowheaders=Content-Type,Authorization"
+      - "traefik.http.routers.motion-mcp.middlewares=motion-mcp-cors"
+
+networks:
+  motion-mcp-network:
+    driver: bridge
+
+volumes:
+  motion-mcp-data:
+    driver: local

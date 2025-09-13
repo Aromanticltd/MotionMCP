@@ -15,7 +15,12 @@
     "worker:deploy": "wrangler deploy",
     "worker:publish": "wrangler deploy --env production",
     "worker:tail": "wrangler tail",
-    "worker:secret": "wrangler secret put MOTION_API_KEY"
+    "worker:secret": "wrangler secret put MOTION_API_KEY",
+    "docker:build": "docker build -t motion-mcp-server .",
+    "docker:run": "docker run -p 8787:8787 --env-file .env motion-mcp-server",
+    "docker:compose:up": "docker-compose up -d",
+    "docker:compose:down": "docker-compose down",
+    "docker:compose:logs": "docker-compose logs -f"
   },
   "keywords": [],
   "author": "",
