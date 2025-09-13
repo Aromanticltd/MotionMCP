@@ -2,6 +2,74 @@
 
 A Model Context Protocol (MCP) server that provides LLMs with direct access to the Motion API for task and project management. This server implements the MCP protocol to enable seamless integration between AI assistants and Motion's productivity platform.
 
+# Forked to support running in docker so that it can be used by the likes of n8n.
+
+Currently, I have it running in Docker in a Portainer stack.
+
+With the following config:
+
+version: '3.8'
+
+services:
+  motion-mcp:
+    image: node:20-alpine
+    container_name: motion-mcp
+    working_dir: /app
+    command: >
+      sh -c "
+        apk add --no-cache git &&
+        rm -rf * .* 2>/dev/null || true &&
+        git clone -b issue-2-Add-Support-for-running-Remotely-on-Cloudflare https://github.com/Aromanticltd/MotionMCP.git . &&
+        npm install &&
+        node src/simple-http-server.js
+      "
+    environment:
+      - MOTION_API_KEY=${MOTION_API_KEY}
+      - MOTION_MCP_TOOLS=all
+      - NODE_ENV=production
+      - PORT=8787
+    ports:
+      - "8787:8787"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8787/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - motion-mcp-network
+
+networks:
+  motion-mcp-network:
+    driver: bridge
+
+
+    Make sure to set the motion API as a variable.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The readme below is the original. 
+
 ## Deployment Options
 
 This server supports **dual deployment modes**:
