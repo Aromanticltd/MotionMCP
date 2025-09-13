@@ -208,11 +208,12 @@ class MotionMCPServer {
               description: "Project status (optional)"
             },
             workspaceId: {
-              type: "string",
+              type: ["string", "null"],
               description: "Workspace ID where the project should be created (optional - will auto-select if not provided)"
             }
           },
-          required: ["name"]
+          required: ["name"],
+          additionalProperties: false
         }
       },
       {
@@ -244,11 +245,11 @@ class MotionMCPServer {
               description: "Task description (optional)"
             },
             workspaceId: {
-              type: "string",
+              type: ["string", "null"],
               description: "Workspace ID where the task should be created (optional - will auto-select if not provided)"
             },
             projectId: {
-              type: "string",
+              type: ["string", "null"],
               description: "Project ID to assign task to (optional - tasks can exist without a project)"
             },
             status: {
@@ -265,7 +266,8 @@ class MotionMCPServer {
               description: "Due date in ISO format (optional)"
             }
           },
-          required: ["name"]
+          required: ["name"],
+          additionalProperties: false
         }
       },
       {
@@ -275,11 +277,11 @@ class MotionMCPServer {
           type: "object",
           properties: {
             workspaceId: {
-              type: "string",
+              type: ["string", "null"],
               description: "Workspace ID to filter tasks (optional - will auto-select if not provided)"
             },
             projectId: {
-              type: "string",
+              type: ["string", "null"],
               description: "Filter tasks by project ID (optional - leave empty to get all tasks regardless of project)"
             },
             status: {
@@ -287,6 +289,7 @@ class MotionMCPServer {
               description: "Filter tasks by status (optional)"
             }
           },
+          required: [],
           additionalProperties: false
         }
       },
