@@ -25,10 +25,17 @@ class SimpleMotionApiService {
         config.data = data;
       }
 
+      console.log(`Making API request: ${method} ${endpoint}`);
+      console.log('Request config:', JSON.stringify(config, null, 2));
+
       const response = await axios(config);
+      console.log('API Response:', response.status, response.data);
       return response.data;
     } catch (error) {
-      console.error('API Error:', error.response?.data || error.message);
+      console.error('API Error Details:');
+      console.error('Status:', error.response?.status);
+      console.error('Data:', error.response?.data);
+      console.error('Config:', error.config);
       throw new Error(error.response?.data?.message || error.message);
     }
   }
@@ -40,20 +47,47 @@ class SimpleMotionApiService {
   async getProjects(workspaceId = null) {
     // Motion API requires workspaceId for projects
     if (!workspaceId) {
-      // Try to get the first workspace if none provided
-      const workspaces = await this.getWorkspaces();
-      if (workspaces && workspaces.length > 0) {
-        workspaceId = workspaces[0].id;
-        console.log(`Using default workspace: ${workspaceId}`);
-      } else {
-        throw new Error('No workspace found. Please provide a workspaceId or ensure you have access to at least one workspace.');
+      console.log('No workspaceId provided, fetching workspaces...');
+      try {
+        const workspaces = await this.getWorkspaces();
+        console.log('Available workspaces:', JSON.stringify(workspaces, null, 2));
+        
+        if (workspaces && workspaces.length > 0) {
+          workspaceId = workspaces[0].id;
+          console.log(`Using default workspace: ${workspaceId}`);
+        } else {
+          throw new Error('No workspace found. Please provide a workspaceId or ensure you have access to at least one workspace.');
+        }
+      } catch (error) {
+        console.error('Error fetching workspaces:', error);
+        throw new Error(`Failed to fetch workspaces: ${error.message}`);
       }
     }
     const endpoint = `/projects?workspaceId=${workspaceId}`;
+    console.log(`Fetching projects for workspace: ${workspaceId}`);
     return this.makeRequest('GET', endpoint);
   }
 
   async createProject(projectData) {
+    // Motion API requires workspaceId for creating projects
+    if (!projectData.workspaceId) {
+      console.log('No workspaceId in project data, fetching workspaces...');
+      try {
+        const workspaces = await this.getWorkspaces();
+        console.log('Available workspaces for project creation:', JSON.stringify(workspaces, null, 2));
+        
+        if (workspaces && workspaces.length > 0) {
+          projectData.workspaceId = workspaces[0].id;
+          console.log(`Using default workspace for project creation: ${projectData.workspaceId}`);
+        } else {
+          throw new Error('No workspace found. Please provide a workspaceId or ensure you have access to at least one workspace.');
+        }
+      } catch (error) {
+        console.error('Error fetching workspaces for project creation:', error);
+        throw new Error(`Failed to fetch workspaces: ${error.message}`);
+      }
+    }
+    console.log('Creating project with data:', JSON.stringify(projectData, null, 2));
     return this.makeRequest('POST', '/projects', projectData);
   }
 
@@ -83,6 +117,25 @@ class SimpleMotionApiService {
   }
 
   async createTask(taskData) {
+    // Motion API requires workspaceId for creating tasks
+    if (!taskData.workspaceId) {
+      console.log('No workspaceId in task data, fetching workspaces...');
+      try {
+        const workspaces = await this.getWorkspaces();
+        console.log('Available workspaces for task creation:', JSON.stringify(workspaces, null, 2));
+        
+        if (workspaces && workspaces.length > 0) {
+          taskData.workspaceId = workspaces[0].id;
+          console.log(`Using default workspace for task creation: ${taskData.workspaceId}`);
+        } else {
+          throw new Error('No workspace found. Please provide a workspaceId or ensure you have access to at least one workspace.');
+        }
+      } catch (error) {
+        console.error('Error fetching workspaces for task creation:', error);
+        throw new Error(`Failed to fetch workspaces: ${error.message}`);
+      }
+    }
+    console.log('Creating task with data:', JSON.stringify(taskData, null, 2));
     return this.makeRequest('POST', '/tasks', taskData);
   }
 }
