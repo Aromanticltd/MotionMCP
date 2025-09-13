@@ -49,10 +49,14 @@ class SimpleMotionApiService {
     if (!workspaceId) {
       console.log('No workspaceId provided, fetching workspaces...');
       try {
-        const workspaces = await this.getWorkspaces();
-        console.log('Available workspaces:', JSON.stringify(workspaces, null, 2));
+        const response = await this.getWorkspaces();
+        console.log('Available workspaces response:', JSON.stringify(response, null, 2));
         
-        if (workspaces && workspaces.length > 0) {
+        // Handle different response formats
+        const workspaces = response.workspaces || response;
+        console.log('Extracted workspaces:', JSON.stringify(workspaces, null, 2));
+        
+        if (Array.isArray(workspaces) && workspaces.length > 0) {
           workspaceId = workspaces[0].id;
           console.log(`Using default workspace: ${workspaceId}`);
         } else {
@@ -73,10 +77,14 @@ class SimpleMotionApiService {
     if (!projectData.workspaceId) {
       console.log('No workspaceId in project data, fetching workspaces...');
       try {
-        const workspaces = await this.getWorkspaces();
-        console.log('Available workspaces for project creation:', JSON.stringify(workspaces, null, 2));
+        const response = await this.getWorkspaces();
+        console.log('Available workspaces for project creation:', JSON.stringify(response, null, 2));
         
-        if (workspaces && workspaces.length > 0) {
+        // Handle different response formats
+        const workspaces = response.workspaces || response;
+        console.log('Extracted workspaces for project creation:', JSON.stringify(workspaces, null, 2));
+        
+        if (Array.isArray(workspaces) && workspaces.length > 0) {
           projectData.workspaceId = workspaces[0].id;
           console.log(`Using default workspace for project creation: ${projectData.workspaceId}`);
         } else {
@@ -94,13 +102,24 @@ class SimpleMotionApiService {
   async getTasks(options = {}) {
     // Motion API requires workspaceId for tasks
     if (!options.workspaceId) {
-      // Try to get the first workspace if none provided
-      const workspaces = await this.getWorkspaces();
-      if (workspaces && workspaces.length > 0) {
-        options.workspaceId = workspaces[0].id;
-        console.log(`Using default workspace for tasks: ${options.workspaceId}`);
-      } else {
-        throw new Error('No workspace found. Please provide a workspaceId or ensure you have access to at least one workspace.');
+      console.log('No workspaceId provided for tasks, fetching workspaces...');
+      try {
+        const response = await this.getWorkspaces();
+        console.log('Available workspaces for tasks:', JSON.stringify(response, null, 2));
+        
+        // Handle different response formats
+        const workspaces = response.workspaces || response;
+        console.log('Extracted workspaces for tasks:', JSON.stringify(workspaces, null, 2));
+        
+        if (Array.isArray(workspaces) && workspaces.length > 0) {
+          options.workspaceId = workspaces[0].id;
+          console.log(`Using default workspace for tasks: ${options.workspaceId}`);
+        } else {
+          throw new Error('No workspace found. Please provide a workspaceId or ensure you have access to at least one workspace.');
+        }
+      } catch (error) {
+        console.error('Error fetching workspaces for tasks:', error);
+        throw new Error(`Failed to fetch workspaces: ${error.message}`);
       }
     }
     
@@ -121,10 +140,14 @@ class SimpleMotionApiService {
     if (!taskData.workspaceId) {
       console.log('No workspaceId in task data, fetching workspaces...');
       try {
-        const workspaces = await this.getWorkspaces();
-        console.log('Available workspaces for task creation:', JSON.stringify(workspaces, null, 2));
+        const response = await this.getWorkspaces();
+        console.log('Available workspaces for task creation:', JSON.stringify(response, null, 2));
         
-        if (workspaces && workspaces.length > 0) {
+        // Handle different response formats
+        const workspaces = response.workspaces || response;
+        console.log('Extracted workspaces for task creation:', JSON.stringify(workspaces, null, 2));
+        
+        if (Array.isArray(workspaces) && workspaces.length > 0) {
           taskData.workspaceId = workspaces[0].id;
           console.log(`Using default workspace for task creation: ${taskData.workspaceId}`);
         } else {
@@ -354,7 +377,17 @@ class MotionMCPServer {
   }
 
   async handleListWorkspaces() {
-    const workspaces = await this.motionService.getWorkspaces();
+    const response = await this.motionService.getWorkspaces();
+    console.log('Workspaces response:', JSON.stringify(response, null, 2));
+    
+    // Handle different response formats
+    const workspaces = response.workspaces || response;
+    console.log('Extracted workspaces:', JSON.stringify(workspaces, null, 2));
+    
+    if (!Array.isArray(workspaces)) {
+      throw new Error(`Unexpected workspaces format: ${typeof workspaces}`);
+    }
+    
     const workspaceList = workspaces.map(w => `- ${w.name} (ID: ${w.id})`).join('\n');
     return {
       content: [
