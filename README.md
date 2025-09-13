@@ -7,7 +7,7 @@ A Model Context Protocol (MCP) server that provides LLMs with direct access to t
 Currently, I have it running in Docker in a Portainer stack.
 
 With the following config:
-
+```bash
 version: '3.8'
 
 services:
@@ -43,7 +43,7 @@ services:
 networks:
   motion-mcp-network:
     driver: bridge
-
+```
 
     Make sure to set the motion API as a variable.
 
